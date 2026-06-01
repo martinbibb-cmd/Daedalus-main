@@ -27,3 +27,5 @@ Atlas Mind is not responsible for:
 
 * [Mind Architecture Constitution & AI Guardrails](docs/architecture-constitution.md)
 * [Mind Core Architecture Foundation](docs/core-architecture-foundation.md)
+* [Architecture Assumptions](docs/architecture-assumptions.md)
+* [Architecture Fixtures](docs/architecture-fixtures/README.md)
