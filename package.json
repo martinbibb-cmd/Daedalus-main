@@ -7,8 +7,9 @@
     "doc": "docs"
   },
   "scripts": {
-    "build": "node --check src/index.js && node --check src/daedalus-package.js",
-    "test": "node --test"
+    "build": "node --check src/index.js && node --check src/daedalus-package.js && node --check src/import-shell.js && node --check src/worker.js && node --check src/web-server.js",
+    "test": "node --test",
+    "start": "node src/web-server.js"
   },
   "repository": {
     "type": "git",

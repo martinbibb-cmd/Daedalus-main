@@ -48,3 +48,15 @@ The first executable Main pipeline now supports:
 
 * `npm run build`
 * `npm test`
+* `npm start`
+
+## Cloudflare-ready import shell
+
+Daedalus-Main now includes a basic stateless web import shell for uploading or pasting a `DaedalusPackage` JSON and compiling a twin summary.
+
+- Route: `/import` (also available on `/`)
+- Warning shown in UI: "This package is processed locally/in-session unless storage is later enabled."
+- Validation errors are rendered as structured path/code/message/value rows
+- No persistence, OAuth, portal, PDF, or physics features are enabled in this shell
+
+See [Cloudflare deployment notes](docs/cloudflare-deployment.md).
