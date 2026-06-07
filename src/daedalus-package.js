@@ -40,6 +40,12 @@ const SYSTEM_TAGS = new Set([
   'heat source',
   'flue',
   'gas meter',
+  'feed and expansion',
+  'meter',
+  'pipework',
+  'pump',
+  'thermal store',
+  'valve',
 ]);
 const HOUSE_TAGS = new Set([
   'area',
