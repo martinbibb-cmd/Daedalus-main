@@ -1,0 +1,87 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+const fixture = require('./fixtures/valid-daedalus-package-v3.json');
+const {
+  NO_PERSISTENCE_WARNING,
+  handleImportShellRequest,
+  summarizeCompiledTwin,
+} = require('../src/import-shell');
+const { importDaedalusPackage } = require('../src/daedalus-package');
+
+test('renders import shell route with no-persistence warning', async () => {
+  const response = await handleImportShellRequest(new Request('https://example.com/import'));
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(body, /DaedalusPackage Import Shell/);
+  assert.match(body, new RegExp(NO_PERSISTENCE_WARNING.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+});
+
+test('renders compiled twin summary for a valid package import', async () => {
+  const formData = new FormData();
+  formData.set('packageText', JSON.stringify(fixture));
+
+  const response = await handleImportShellRequest(
+    new Request('https://example.com/import', {
+      body: formData,
+      method: 'POST',
+    }),
+  );
+
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(body, /Compiled Twin Summary/);
+  assert.match(body, /House areas:<\/strong> 1/);
+  assert.match(body, /System assets:<\/strong> 4/);
+  assert.match(body, /Home context:<\/strong> 5/);
+  assert.match(body, /Relationships:<\/strong> 5/);
+  assert.match(body, /Evidence count:<\/strong> 3/);
+  assert.match(body, /Unknown count:<\/strong> 5/);
+  assert.match(body, /Approximate count:<\/strong> 2/);
+  assert.match(body, /Unresolved count:<\/strong> 3/);
+});
+
+test('renders structured validation issues for invalid package import', async () => {
+  const invalidPackage = structuredClone(fixture);
+  delete invalidPackage.property_ref;
+
+  const response = await handleImportShellRequest(
+    new Request('https://example.com/import', {
+      body: JSON.stringify(invalidPackage),
+      headers: {
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+    }),
+  );
+
+  const body = await response.text();
+
+  assert.equal(response.status, 400);
+  assert.match(body, /Validation issues/);
+  assert.match(body, /<th>Path<\/th><th>Code<\/th><th>Message<\/th><th>Value<\/th>/);
+  assert.match(body, /missing_field/);
+  assert.match(body, /propertyRef is required/);
+});
+
+test('summarizes compiled twin counts needed by the shell', () => {
+  const compiled = importDaedalusPackage(structuredClone(fixture));
+
+  assert.deepEqual(summarizeCompiledTwin(compiled), {
+    approximateCount: 2,
+    evidenceCount: 3,
+    homeContextCount: 5,
+    houseAreaCount: 1,
+    packageVersion: 3,
+    propertyRef: 'prop-main-001',
+    relationshipCount: 5,
+    systemAssetCount: 4,
+    unknownCount: 5,
+    unresolvedCount: 3,
+    visitId: 'visit-003',
+  });
+});
