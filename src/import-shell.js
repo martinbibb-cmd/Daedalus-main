@@ -68,6 +68,7 @@ async function handleImportShellRequest(request) {
 
     return createHtmlResponse(
       renderImportShellPage({
+        inspection: buildInspectionData(compiledTwin),
         packageText: submittedPackage,
         summary: summarizeCompiledTwin(compiledTwin),
       }),
@@ -145,9 +146,10 @@ async function readSubmittedPackage(request) {
   return textBody.trim() === '' ? null : textBody;
 }
 
-function renderImportShellPage({ summary = null, issues = [], packageText = '' } = {}) {
+function renderImportShellPage({ summary = null, inspection = null, issues = [], packageText = '' } = {}) {
   const hasIssues = Array.isArray(issues) && issues.length > 0;
   const hasSummary = Boolean(summary);
+  const hasInspection = Boolean(inspection);
 
   return `<!doctype html>
 <html lang="en">
@@ -167,6 +169,7 @@ function renderImportShellPage({ summary = null, issues = [], packageText = '' }
       .summary-list { list-style: none; padding: 0; margin: 1rem 0; }
       .summary-list li { margin: 0.35rem 0; }
       .stack { display: grid; gap: 0.75rem; }
+      .muted { color: #57606a; }
     </style>
   </head>
   <body>
@@ -208,6 +211,7 @@ function renderImportShellPage({ summary = null, issues = [], packageText = '' }
       </section>`
           : ''
       }
+      ${hasInspection ? renderInspectionSections(inspection) : ''}
 
       ${
         hasIssues
@@ -241,6 +245,375 @@ function renderImportShellPage({ summary = null, issues = [], packageText = '' }
 </html>`;
 }
 
+function buildInspectionData(compiledTwin) {
+  const observationById = new Map();
+  const inByObservationId = new Map();
+  const outByObservationId = new Map();
+  const containedAssetIdsByArea = new Map();
+  const evidenceLinkedAssetIds = new Map();
+
+  for (const relationship of compiledTwin.relationships) {
+    if (!outByObservationId.has(relationship.from)) {
+      outByObservationId.set(relationship.from, []);
+    }
+    if (!inByObservationId.has(relationship.to)) {
+      inByObservationId.set(relationship.to, []);
+    }
+    outByObservationId.get(relationship.from).push(relationship);
+    inByObservationId.get(relationship.to).push(relationship);
+
+    if (relationship.type === 'containedIn') {
+      if (!containedAssetIdsByArea.has(relationship.to)) {
+        containedAssetIdsByArea.set(relationship.to, []);
+      }
+      containedAssetIdsByArea.get(relationship.to).push(relationship.from);
+    }
+  }
+
+  for (const observation of compiledTwin.homeTwin.observations) {
+    observationById.set(observation.observationId, observation);
+
+    for (const evidenceRef of observation.evidenceRefs) {
+      if (!evidenceLinkedAssetIds.has(evidenceRef)) {
+        evidenceLinkedAssetIds.set(evidenceRef, new Set());
+      }
+      if (observation.classification !== 'evidence') {
+        evidenceLinkedAssetIds.get(evidenceRef).add(observation.observationId);
+      }
+    }
+  }
+
+  for (const relationship of compiledTwin.relationships) {
+    for (const evidenceRef of relationship.evidenceRefs) {
+      if (!evidenceLinkedAssetIds.has(evidenceRef)) {
+        evidenceLinkedAssetIds.set(evidenceRef, new Set());
+      }
+      evidenceLinkedAssetIds.get(evidenceRef).add(relationship.from);
+      evidenceLinkedAssetIds.get(evidenceRef).add(relationship.to);
+    }
+  }
+
+  const confidenceBySourceRef = createConfidenceBySourceRef(compiledTwin.confidenceStates);
+  const systemAssets = compiledTwin.systemTwin.observations.map((asset) => ({
+    category: asset.classification,
+    confidence: formatConfidence(asset.confidence, confidenceBySourceRef.get(`observation:${asset.observationId}`) ?? []),
+    evidenceCount: asset.evidenceRefs.length,
+    id: asset.observationId,
+    inCount: (inByObservationId.get(asset.observationId) ?? []).length,
+    outCount: (outByObservationId.get(asset.observationId) ?? []).length,
+    placementState: inferAssetPlacementState(asset.observationId, outByObservationId),
+    subtype: inferAssetSubtype(asset),
+  }));
+  const areas = compiledTwin.houseTwin.areas.map((area) => ({
+    confidence: formatConfidence(area.confidence, confidenceBySourceRef.get(`observation:${area.observationId}`) ?? []),
+    containedAssets: containedAssetIdsByArea.get(area.observationId) ?? [],
+    id: area.observationId,
+    name: readStringField(area.rawObservation, ['name']) ?? area.observationId,
+    placementState: inferAreaPlacementState(area.observationId, inByObservationId, outByObservationId),
+  }));
+  const relationships = compiledTwin.relationships.map((relationship) => ({
+    confidence: formatConfidence(relationship.confidence, confidenceBySourceRef.get(`relationship:${relationship.relationshipId}`) ?? []),
+    id: relationship.relationshipId,
+    provenance: formatProvenance(relationship.provenance),
+    source: relationship.from,
+    target: relationship.to,
+    type: relationship.type,
+  }));
+  const evidence = compiledTwin.evidence.map((item) => {
+    const evidenceId = readStringField(item, ['observation_id', 'observationId']) ?? 'unknown-evidence';
+    const linkedAssetIds = new Set(evidenceLinkedAssetIds.get(evidenceId) ?? []);
+    const directAssetRef = readStringField(item, ['asset_ref', 'assetRef']);
+    if (directAssetRef) {
+      linkedAssetIds.add(directAssetRef);
+    }
+
+    return {
+      confidence: formatConfidence(null, confidenceBySourceRef.get(`observation:${evidenceId}`) ?? []),
+      id: evidenceId,
+      linkedAssets: Array.from(linkedAssetIds),
+      source: readStringField(item, ['tag']) ?? 'evidence',
+      title: readStringField(item, ['title', 'name', 'file_ref', 'fileRef']) ?? evidenceId,
+      type: readStringField(item, ['tag']) ?? 'evidence',
+    };
+  });
+  const provenance = compiledTwin.provenanceLinks.map((link) => ({
+    evidenceCount: link.evidenceRefs.length,
+    evidenceRefs: link.evidenceRefs,
+    sourceRef: link.sourceRef,
+    sourceType: link.sourceType,
+    summary: formatProvenance(link.provenance),
+  }));
+  const uncertainty = {
+    approximate: formatUncertaintyStates(compiledTwin.confidenceStates, 'approximate'),
+    unknown: formatUncertaintyStates(compiledTwin.confidenceStates, 'unknown'),
+    unresolved: formatUncertaintyStates(compiledTwin.confidenceStates, 'unresolved'),
+  };
+
+  return {
+    areas,
+    evidence,
+    provenance,
+    relationships,
+    systemAssets,
+    uncertainty,
+  };
+}
+
+function renderInspectionSections(inspection) {
+  return `<section>
+        <h2>Areas</h2>
+        ${renderAreasTable(inspection.areas)}
+      </section>
+      <section>
+        <h2>System assets</h2>
+        ${renderSystemAssetsTable(inspection.systemAssets)}
+      </section>
+      <section>
+        <h2>Relationships</h2>
+        ${renderRelationshipsTable(inspection.relationships)}
+      </section>
+      <section>
+        <h2>Evidence</h2>
+        ${renderEvidenceTable(inspection.evidence)}
+      </section>
+      <section>
+        <h2>Provenance</h2>
+        ${renderProvenanceTable(inspection.provenance)}
+      </section>
+      <section>
+        <h2>Uncertainty</h2>
+        ${renderUncertaintyTables(inspection.uncertainty)}
+      </section>`;
+}
+
+function renderSystemAssetsTable(systemAssets) {
+  return `<table>
+    <thead>
+      <tr><th>Asset</th><th>Category</th><th>Subtype</th><th>Confidence</th><th>Placement state</th><th>Linked evidence</th><th>Relationships in/out</th></tr>
+    </thead>
+    <tbody>
+      ${systemAssets
+        .map(
+          (asset) => `<tr>
+        <td>${escapeHtml(asset.id)}</td>
+        <td>${escapeHtml(asset.category)}</td>
+        <td>${escapeHtml(asset.subtype)}</td>
+        <td>${escapeHtml(asset.confidence)}</td>
+        <td>${escapeHtml(asset.placementState)}</td>
+        <td>${asset.evidenceCount}</td>
+        <td>${asset.inCount}/${asset.outCount}</td>
+      </tr>`,
+        )
+        .join('')}
+    </tbody>
+  </table>`;
+}
+
+function renderAreasTable(areas) {
+  return `<table>
+    <thead>
+      <tr><th>Area</th><th>Name</th><th>Confidence</th><th>Placement state</th><th>Contained assets</th></tr>
+    </thead>
+    <tbody>
+      ${areas
+        .map(
+          (area) => `<tr>
+        <td>${escapeHtml(area.id)}</td>
+        <td>${escapeHtml(area.name)}</td>
+        <td>${escapeHtml(area.confidence)}</td>
+        <td>${escapeHtml(area.placementState)}</td>
+        <td>${escapeHtml(formatList(area.containedAssets))}</td>
+      </tr>`,
+        )
+        .join('')}
+    </tbody>
+  </table>`;
+}
+
+function renderRelationshipsTable(relationships) {
+  return `<table>
+    <thead>
+      <tr><th>Relationship</th><th>Source</th><th>Type</th><th>Target</th><th>Provenance</th><th>Confidence</th></tr>
+    </thead>
+    <tbody>
+      ${relationships
+        .map(
+          (relationship) => `<tr>
+        <td>${escapeHtml(relationship.id)}</td>
+        <td>${escapeHtml(relationship.source)}</td>
+        <td>${escapeHtml(relationship.type)}</td>
+        <td>${escapeHtml(relationship.target)}</td>
+        <td>${escapeHtml(relationship.provenance)}</td>
+        <td>${escapeHtml(relationship.confidence)}</td>
+      </tr>`,
+        )
+        .join('')}
+    </tbody>
+  </table>`;
+}
+
+function renderEvidenceTable(evidence) {
+  return `<table>
+    <thead>
+      <tr><th>Evidence</th><th>Title</th><th>Type/source</th><th>Confidence</th><th>Linked assets</th></tr>
+    </thead>
+    <tbody>
+      ${evidence
+        .map(
+          (item) => `<tr>
+        <td>${escapeHtml(item.id)}</td>
+        <td>${escapeHtml(item.title)}</td>
+        <td>${escapeHtml(`${item.type} · ${item.source}`)}</td>
+        <td>${escapeHtml(item.confidence)}</td>
+        <td>${escapeHtml(formatList(item.linkedAssets))}</td>
+      </tr>`,
+        )
+        .join('')}
+    </tbody>
+  </table>`;
+}
+
+function renderProvenanceTable(provenance) {
+  return `<table>
+    <thead>
+      <tr><th>Source ref</th><th>Source type</th><th>Provenance</th><th>Evidence refs</th></tr>
+    </thead>
+    <tbody>
+      ${provenance
+        .map(
+          (entry) => `<tr>
+        <td>${escapeHtml(entry.sourceRef)}</td>
+        <td>${escapeHtml(entry.sourceType)}</td>
+        <td>${escapeHtml(entry.summary)}</td>
+        <td>${escapeHtml(`${entry.evidenceCount} (${formatList(entry.evidenceRefs)})`)}</td>
+      </tr>`,
+        )
+        .join('')}
+    </tbody>
+  </table>`;
+}
+
+function renderUncertaintyTables(uncertainty) {
+  return `<div class="stack">
+    <section>
+      <h3>Unknown facts</h3>
+      ${renderUncertaintyTable(uncertainty.unknown)}
+    </section>
+    <section>
+      <h3>Approximate facts</h3>
+      ${renderUncertaintyTable(uncertainty.approximate)}
+    </section>
+    <section>
+      <h3>Unresolved facts</h3>
+      ${renderUncertaintyTable(uncertainty.unresolved)}
+    </section>
+  </div>`;
+}
+
+function renderUncertaintyTable(items) {
+  if (items.length === 0) {
+    return '<p class="muted">None</p>';
+  }
+
+  return `<table>
+    <thead>
+      <tr><th>Source</th><th>Path</th><th>State</th></tr>
+    </thead>
+    <tbody>
+      ${items
+        .map(
+          (item) => `<tr>
+        <td>${escapeHtml(item.sourceRef)}</td>
+        <td>${escapeHtml(item.path)}</td>
+        <td>${escapeHtml(item.state)}</td>
+      </tr>`,
+        )
+        .join('')}
+    </tbody>
+  </table>`;
+}
+
+function createConfidenceBySourceRef(confidenceStates) {
+  const confidenceBySourceRef = new Map();
+  for (const state of confidenceStates) {
+    if (!confidenceBySourceRef.has(state.sourceRef)) {
+      confidenceBySourceRef.set(state.sourceRef, []);
+    }
+    confidenceBySourceRef.get(state.sourceRef).push(state);
+  }
+  return confidenceBySourceRef;
+}
+
+function formatConfidence(confidence, confidenceStates) {
+  if (confidence) {
+    return JSON.stringify(confidence);
+  }
+
+  if (confidenceStates.length === 0) {
+    return 'none';
+  }
+
+  const states = new Set(confidenceStates.map((state) => state.state));
+  return Array.from(states).join(', ');
+}
+
+function formatUncertaintyStates(confidenceStates, targetState) {
+  return confidenceStates
+    .filter((state) => state.state === targetState)
+    .map((state) => ({
+      path: state.path || '(root)',
+      sourceRef: state.sourceRef,
+      state: state.state,
+    }));
+}
+
+function inferAssetSubtype(asset) {
+  const type = readStringField(asset.rawObservation, ['type']);
+  return type ? `${asset.tag}:${type}` : asset.tag;
+}
+
+function inferAssetPlacementState(assetId, outByObservationId) {
+  const outgoing = outByObservationId.get(assetId) ?? [];
+  return outgoing.some((relationship) => relationship.type === 'containedIn') ? 'placed' : 'unplaced';
+}
+
+function inferAreaPlacementState(areaId, inByObservationId, outByObservationId) {
+  const inCount = (inByObservationId.get(areaId) ?? []).length;
+  const outCount = (outByObservationId.get(areaId) ?? []).length;
+  if (inCount === 0 && outCount === 0) {
+    return 'unreferenced';
+  }
+  if (inCount === 0) {
+    return 'declared';
+  }
+  return 'referenced';
+}
+
+function formatProvenance(provenance) {
+  if (!provenance) {
+    return 'none';
+  }
+
+  const method = readStringField(provenance, ['method']) ?? 'unknown-method';
+  const capturedBy = readStringField(provenance, ['capturedBy', 'captured_by']) ?? 'unknown-captured-by';
+  const capturedAt = readStringField(provenance, ['capturedAt', 'captured_at']) ?? 'unknown-captured-at';
+  return `${method} | ${capturedBy} | ${capturedAt}`;
+}
+
+function formatList(values) {
+  return values.length === 0 ? 'none' : values.join(', ');
+}
+
+function readStringField(value, keys) {
+  for (const key of keys) {
+    if (typeof value[key] === 'string' && value[key].trim() !== '') {
+      return value[key];
+    }
+  }
+
+  return null;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -261,6 +634,7 @@ function createHtmlResponse(html, status, omitBody = false) {
 }
 
 module.exports = {
+  buildInspectionData,
   NO_PERSISTENCE_WARNING,
   handleImportShellRequest,
   renderImportShellPage,
