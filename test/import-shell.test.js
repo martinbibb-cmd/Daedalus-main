@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 
 const fixture = require('./fixtures/valid-daedalus-package-v3.json');
 const {
+  buildInspectionData,
   NO_PERSISTENCE_WARNING,
   handleImportShellRequest,
   summarizeCompiledTwin,
@@ -43,6 +44,18 @@ test('renders compiled twin summary for a valid package import', async () => {
   assert.match(body, /Unknown count:<\/strong> 5/);
   assert.match(body, /Approximate count:<\/strong> 2/);
   assert.match(body, /Unresolved count:<\/strong> 3/);
+  assert.match(body, /<h2>Areas<\/h2>/);
+  assert.match(body, /<h2>System assets<\/h2>/);
+  assert.match(body, /<h2>Relationships<\/h2>/);
+  assert.match(body, /<h2>Evidence<\/h2>/);
+  assert.match(body, /<h2>Provenance<\/h2>/);
+  assert.match(body, /<h2>Uncertainty<\/h2>/);
+  assert.match(body, /boiler-001/);
+  assert.match(body, /photo-001/);
+  assert.match(body, /rel-001/);
+  assert.match(body, /Unknown facts/);
+  assert.match(body, /Approximate facts/);
+  assert.match(body, /Unresolved facts/);
 });
 
 test('renders structured validation issues for invalid package import', async () => {
@@ -84,4 +97,20 @@ test('summarizes compiled twin counts needed by the shell', () => {
     unresolvedCount: 3,
     visitId: 'visit-003',
   });
+});
+
+test('builds inspection data with evidence and relationship links', () => {
+  const compiled = importDaedalusPackage(structuredClone(fixture));
+  const inspection = buildInspectionData(compiled);
+
+  assert.equal(inspection.systemAssets.length, 4);
+  assert.deepEqual(inspection.areas[0].containedAssets, ['boiler-001']);
+  assert.equal(inspection.relationships.length, 5);
+  assert.deepEqual(
+    inspection.evidence.find((entry) => entry.id === 'photo-001').linkedAssets.sort(),
+    ['boiler-001', 'area-ground-floor'].sort(),
+  );
+  assert.ok(inspection.uncertainty.unknown.length > 0);
+  assert.ok(inspection.uncertainty.approximate.length > 0);
+  assert.ok(inspection.uncertainty.unresolved.length > 0);
 });
