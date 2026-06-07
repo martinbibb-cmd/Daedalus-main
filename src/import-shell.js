@@ -1,6 +1,7 @@
 'use strict';
 
 const { DaedalusPackageValidationError, importDaedalusPackage } = require('./daedalus-package');
+const { renderTwinMapViews } = require('./twin-map');
 
 const NO_PERSISTENCE_WARNING =
   'This package is processed locally/in-session unless storage is later enabled.';
@@ -295,6 +296,7 @@ function buildInspectionData(compiledTwin) {
 
   const confidenceBySourceRef = createConfidenceBySourceRef(compiledTwin.confidenceStates);
   const systemAssets = compiledTwin.systemTwin.observations.map((asset) => ({
+    areaRef: readStringField(asset.rawObservation, ['room_ref', 'roomRef', 'area_ref', 'areaRef']) ?? null,
     category: asset.classification,
     confidence: formatConfidence(asset.confidence, confidenceBySourceRef.get(`observation:${asset.observationId}`) ?? []),
     evidenceCount: asset.evidenceRefs.length,
@@ -383,7 +385,8 @@ function renderInspectionSections(inspection) {
       <section>
         <h2>Uncertainty</h2>
         ${renderUncertaintyTables(inspection.uncertainty)}
-      </section>`;
+      </section>
+      ${renderTwinMapViews(inspection)}`;
 }
 
 function renderSystemAssetsTable(systemAssets) {
@@ -638,5 +641,6 @@ module.exports = {
   NO_PERSISTENCE_WARNING,
   handleImportShellRequest,
   renderImportShellPage,
+  renderTwinMapViews,
   summarizeCompiledTwin,
 };
