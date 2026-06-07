@@ -1,0 +1,176 @@
+{
+  "packageVersion": 3,
+  "packageId": "pkg-001",
+  "visit_id": "visit-003",
+  "property_ref": "prop-main-001",
+  "captured_at": "2026-06-03T11:00:00Z",
+  "observations": [
+    {
+      "observation_id": "area-ground-floor",
+      "tag": "area",
+      "name": "Ground floor",
+      "provenance": {
+        "method": "surveyor-observation",
+        "captured_by": "surveyor-101",
+        "captured_at": "2026-06-03T11:00:00Z"
+      }
+    },
+    {
+      "observation_id": "boiler-001",
+      "tag": "boiler",
+      "type": "regular",
+      "manufacturer": null,
+      "model": null,
+      "identity_resolved": false,
+      "age_years": {
+        "value": 12,
+        "state": "approximate"
+      },
+      "evidence_refs": [
+        "photo-001",
+        "video-001"
+      ],
+      "provenance": {
+        "method": "surveyor-observation",
+        "captured_by": "surveyor-101",
+        "captured_at": "2026-06-03T11:01:00Z"
+      }
+    },
+    {
+      "observation_id": "cylinder-001",
+      "tag": "cylinder",
+      "manufacturer": null,
+      "model": null,
+      "identity_resolved": false,
+      "capacity_litres": {
+        "value": 180,
+        "state": "approximate"
+      },
+      "evidence_refs": [
+        "photo-002"
+      ],
+      "provenance": {
+        "method": "surveyor-observation",
+        "captured_by": "surveyor-101",
+        "captured_at": "2026-06-03T11:03:00Z"
+      }
+    },
+    {
+      "observation_id": "radiator-001",
+      "tag": "radiator",
+      "room_ref": "area-ground-floor",
+      "output_state": {
+        "state": "unknown"
+      },
+      "provenance": {
+        "method": "surveyor-observation",
+        "captured_by": "surveyor-101",
+        "captured_at": "2026-06-03T11:04:00Z"
+      }
+    },
+    {
+      "observation_id": "controls-001",
+      "tag": "controls",
+      "observed_value": "Programmer and room thermostat present",
+      "resolution_status": "unresolved",
+      "provenance": {
+        "method": "surveyor-observation",
+        "captured_by": "surveyor-101",
+        "captured_at": "2026-06-03T11:05:00Z"
+      }
+    },
+    {
+      "observation_id": "photo-001",
+      "tag": "photo evidence",
+      "asset_ref": "boiler-001",
+      "file_ref": "boiler.jpg",
+      "provenance": {
+        "method": "device-camera",
+        "captured_by": "surveyor-101",
+        "captured_at": "2026-06-03T11:01:30Z"
+      }
+    },
+    {
+      "observation_id": "video-001",
+      "tag": "video evidence",
+      "asset_ref": "boiler-001",
+      "file_ref": "boiler.mp4",
+      "provenance": {
+        "method": "device-camera",
+        "captured_by": "surveyor-101",
+        "captured_at": "2026-06-03T11:01:45Z"
+      }
+    },
+    {
+      "observation_id": "photo-002",
+      "tag": "photo evidence",
+      "asset_ref": "cylinder-001",
+      "file_ref": "cylinder.jpg",
+      "provenance": {
+        "method": "device-camera",
+        "captured_by": "surveyor-101",
+        "captured_at": "2026-06-03T11:03:30Z"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "relationship_id": "rel-001",
+      "type": "containedIn",
+      "from": "boiler-001",
+      "to": "area-ground-floor",
+      "evidence_refs": [
+        "photo-001"
+      ],
+      "provenance": {
+        "method": "surveyor-observation",
+        "captured_by": "surveyor-101",
+        "captured_at": "2026-06-03T11:02:00Z"
+      }
+    },
+    {
+      "relationship_id": "rel-002",
+      "type": "connectedTo",
+      "from": "boiler-001",
+      "to": "cylinder-001",
+      "provenance": {
+        "method": "surveyor-observation",
+        "captured_by": "surveyor-101",
+        "captured_at": "2026-06-03T11:03:10Z"
+      }
+    },
+    {
+      "relationship_id": "rel-003",
+      "type": "supplies",
+      "from": "boiler-001",
+      "to": "radiator-001",
+      "provenance": {
+        "method": "surveyor-observation",
+        "captured_by": "surveyor-101",
+        "captured_at": "2026-06-03T11:04:10Z"
+      }
+    },
+    {
+      "relationship_id": "rel-004",
+      "type": "controls",
+      "from": "controls-001",
+      "to": "boiler-001",
+      "provenance": {
+        "method": "surveyor-observation",
+        "captured_by": "surveyor-101",
+        "captured_at": "2026-06-03T11:05:10Z"
+      }
+    },
+    {
+      "relationship_id": "rel-005",
+      "type": "serves",
+      "from": "radiator-001",
+      "to": "area-ground-floor",
+      "provenance": {
+        "method": "surveyor-observation",
+        "captured_by": "surveyor-101",
+        "captured_at": "2026-06-03T11:04:20Z"
+      }
+    }
+  ]
+}

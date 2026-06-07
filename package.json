@@ -1,0 +1,25 @@
+{
+  "name": "daedalus-main",
+  "version": "0.1.0",
+  "description": "Daedalus-Main exists to understand and explain reality.",
+  "main": "src/index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "node --check src/index.js && node --check src/daedalus-package.js",
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/martinbibb-cmd/Daedalus-main.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/martinbibb-cmd/Daedalus-main/issues"
+  },
+  "homepage": "https://github.com/martinbibb-cmd/Daedalus-main#readme"
+}

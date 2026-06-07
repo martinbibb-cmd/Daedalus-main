@@ -34,3 +34,17 @@ Daedalus Main is not responsible for:
 * [Daedalus Main Core Architecture Foundation](docs/core-architecture-foundation.md)
 * [Architecture Assumptions](docs/architecture-assumptions.md)
 * [Architecture Fixtures](docs/architecture-fixtures/README.md)
+
+## Initial Main Import Pipeline
+
+The first executable Main pipeline now supports:
+
+* importing a `DaedalusPackage` v3 payload
+* validating package structure and provenance
+* compiling house, system, and home twins into an initial unified property twin model
+* preserving evidence, relationships, uncertainty, and provenance links
+
+## Commands
+
+* `npm run build`
+* `npm test`
