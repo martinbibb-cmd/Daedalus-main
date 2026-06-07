@@ -1,0 +1,74 @@
+{
+  "packageVersion": 3,
+  "packageId": "00000000-0000-0000-0000-000000000001",
+  "visitId": "00000000-0000-0000-0000-000000000010",
+  "propertyRef": "VIS-DAEDALUS-001",
+  "captured_at": "2023-11-14T22:13:20Z",
+  "observations": [
+    {
+      "observation_id": "00000000-0000-0000-0000-000000000020",
+      "tag": "area",
+      "name": "Airing Cupboard",
+      "confidence": "approximate",
+      "capture_state": "approximate",
+      "provenance": {
+        "method": "Daedalus Scan",
+        "captured_by": "Daedalus Scan",
+        "captured_at": "2023-11-14T22:13:20Z"
+      }
+    },
+    {
+      "observation_id": "00000000-0000-0000-0000-000000000040",
+      "tag": "boiler",
+      "name": "Boiler",
+      "type": "unknownHeatSource",
+      "confidence": "approximate",
+      "capture_state": "roomAttached",
+      "evidence_refs": [
+        "00000000-0000-0000-0000-000000000090"
+      ],
+      "provenance": {
+        "method": "Daedalus Scan",
+        "captured_by": "Daedalus Scan",
+        "captured_at": "2023-11-14T22:13:20Z"
+      }
+    },
+    {
+      "observation_id": "00000000-0000-0000-0000-000000000090",
+      "tag": "photo evidence",
+      "name": "Photo",
+      "asset_ref": "00000000-0000-0000-0000-000000000040",
+      "file_ref": "boiler-photo.jpg",
+      "confidence": "observed",
+      "provenance": {
+        "method": "Daedalus Scan",
+        "captured_by": "Daedalus Scan",
+        "captured_at": "2023-11-14T22:13:20Z"
+      }
+    },
+    {
+      "observation_id": "00000000-0000-0000-0000-000000000010-home-context",
+      "tag": "surveyor note",
+      "name": "Family of four",
+      "notes": "Family of four\nCaptured visit",
+      "provenance": {
+        "method": "Daedalus Scan",
+        "captured_by": "Daedalus Scan",
+        "captured_at": "2023-11-14T22:13:20Z"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "relationship_id": "rel-contained-in",
+      "type": "containedIn",
+      "from": "00000000-0000-0000-0000-000000000040",
+      "to": "00000000-0000-0000-0000-000000000020",
+      "provenance": {
+        "method": "Daedalus Scan",
+        "captured_by": "Daedalus Scan",
+        "captured_at": "2023-11-14T22:13:20Z"
+      }
+    }
+  ]
+}

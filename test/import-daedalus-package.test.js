@@ -4,6 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const fixture = require('./fixtures/valid-daedalus-package-v3.json');
+const captureIosFixture = require('./fixtures/capture-ios-daedalus-package-v3.json');
 const {
   DaedalusPackageValidationError,
   FORBIDDEN_OUTPUT_FIELDS,
@@ -71,6 +72,30 @@ test('imports a valid DaedalusPackage v3 into a unified property twin', () => {
   assert.equal(boilerProvenance.provenance.captured_at, '2026-06-03T11:01:00Z');
 
   assert.deepEqual(source, originalSnapshot);
+});
+
+test('imports a Daedalus Capture iOS v3 export shape', () => {
+  const compiled = importDaedalusPackage(structuredClone(captureIosFixture));
+
+  assert.equal(compiled.packageVersion, 3);
+  assert.equal(compiled.visitId, captureIosFixture.visitId);
+  assert.equal(compiled.propertyRef, captureIosFixture.propertyRef);
+  assert.deepEqual(
+    compiled.houseTwin.areas.map((observation) => observation.observationId),
+    ['00000000-0000-0000-0000-000000000020'],
+  );
+  assert.deepEqual(
+    compiled.systemTwin.boilers.map((observation) => observation.observationId),
+    ['00000000-0000-0000-0000-000000000040'],
+  );
+  assert.deepEqual(
+    compiled.evidence.map((evidence) => evidence.observation_id),
+    ['00000000-0000-0000-0000-000000000090'],
+  );
+  assert.deepEqual(
+    compiled.relationships.map((relationship) => relationship.type),
+    ['containedIn'],
+  );
 });
 
 test('rejects invalid packages with structured readable issues', () => {
