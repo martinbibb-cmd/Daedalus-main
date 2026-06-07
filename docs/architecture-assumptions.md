@@ -1,18 +1,18 @@
 # Architecture Assumptions
 
-This document tracks the active architectural assumptions for Atlas Mind DAE before implementation begins.
+This document tracks the active architectural assumptions for Daedalus-Main before implementation begins.
 
 Each assumption is falsifiable. The architecture-fixtures directory contains executable-style fixtures that test each assumption.
 
 ## Assumptions
 
-### A1 — Scan remains capture-first
+### A1 — Daedalus Capture remains capture-first
 
-Scan captures evidence. Scan does not interpret evidence.
+Daedalus Capture captures evidence. Daedalus Capture does not interpret evidence.
 
-Scan may tag observations using the approved tag set. Scan does not resolve, calculate, recommend, or judge.
+Daedalus Capture may tag observations using the approved tag set. Daedalus Capture does not resolve, calculate, recommend, rank, score, or judge.
 
-**Approved Scan output tags:**
+**Approved Daedalus Capture output tags:**
 
 * boiler
 * cylinder
@@ -25,49 +25,49 @@ Scan may tag observations using the approved tag set. Scan does not resolve, cal
 * voice evidence
 * surveyor note
 
-**Not allowed in Scan output:**
+**Not allowed in Daedalus Capture output:**
 
 * resolved product SKU
 * inferred manufacturer or model unless explicitly entered by the surveyor
 * calculated heat loss
-* recommendations
+* recommendation or decision fields
 * pricing
 * suitability decisions
 * customer journey copy
 
-### A2 — Contracts stores observed truth and signed outputs
+### A2 — Daedalus Contracts stores observed truth and signed outputs
 
-Contracts is the store of record for:
+Daedalus Contracts is the store of record for:
 
 * observations captured in the field
 * measurements taken directly
 * customer-stated information
 * provenance of all the above
-* signed outputs promoted from Mind
+* signed outputs promoted from Daedalus Main
 
-### A3 — Contracts does not store inferred understanding by default
+### A3 — Daedalus Contracts does not store inferred understanding by default
 
-Inferred values produced by Mind remain in Mind unless explicitly promoted.
+Inferred values produced by Daedalus Main remain in Daedalus Main unless explicitly promoted.
 
 Promotion requires a deliberate architectural decision and must satisfy the Locus Promotion Rule defined in `core-architecture-foundation.md`.
 
-### A4 — Identity resolution belongs in Mind during Alpha
+### A4 — Identity resolution belongs in Daedalus Main during Alpha
 
-Locus, Timeline, and Snapshot are Mind-only analytical constructs until practical implementation demonstrates clear operational value that cannot be achieved within Mind alone.
+Locus, Timeline, and Snapshot are Daedalus Main analytical constructs until practical implementation demonstrates clear operational value that cannot be achieved within Daedalus Main alone.
 
-Contracts stores visit packages as observations. Mind assembles identity from those observations.
+Daedalus Contracts stores DaedalusPackage observations. Daedalus Main assembles identity from those observations.
 
 ### A5 — Locus, Timeline, and Snapshot are not promoted until earned
 
-These constructs must not be added to Contracts schema ahead of demonstrated need.
+These constructs must not be added to Daedalus Contracts schema ahead of demonstrated need.
 
-### A6 — Simulation Core may be required but must earn implementation
+### A6 — Physics engine coupling may be required but must earn implementation
 
-Simple sequential calculations may satisfy many scenarios. Coupled simulation must be demonstrated to be necessary before the Simulation Core is built.
+Simple sequential calculations may satisfy many scenarios. Coupled modelling must be demonstrated to be necessary before model orchestration for coupled execution is built.
 
 ### A7 — Twins are representations, not root entities
 
-A twin is built from evidence. It is not the source of truth. The source of truth remains in Contracts.
+A twin is built from evidence. It is not the source of truth. The source of truth remains in Daedalus Contracts.
 
 ### A8 — Unknown is valid
 
@@ -77,14 +77,19 @@ Unknown is a valid and complete state. It must not be rejected or replaced with 
 
 ### A9 — Provenance is mandatory
 
-Every piece of data in Contracts must carry provenance. Evidence without provenance is not valid evidence.
+Every piece of data in Daedalus Contracts must carry provenance. Evidence without provenance is not valid evidence.
+
+### A10 — Service comparison must not become recommendation
+
+Daedalus Main may compare delivered services between configurations, but must not rank, score, prescribe, or select a best option.
 
 ## Fixture Index
 
 | Assumption | Fixture |
 |---|---|
-| A1 — Scan capture-first | [Fixture 01 — Scan Raw Capture](architecture-fixtures/fixture-01-scan-raw-capture.md) |
-| A2, A3 — Contracts boundary | [Fixture 02 — Contracts Boundary](architecture-fixtures/fixture-02-contracts-boundary.md) |
+| A1 — Daedalus Capture capture-first | [Fixture 01 — Daedalus Capture Raw Package](architecture-fixtures/fixture-01-scan-raw-capture.md) |
+| A2, A3 — Daedalus Contracts boundary | [Fixture 02 — Daedalus Contracts Boundary](architecture-fixtures/fixture-02-contracts-boundary.md) |
 | A8, A9 — Unknown and provenance | [Fixture 03 — Unknown Preservation](architecture-fixtures/fixture-03-unknown-preservation.md) |
-| A6 — Simulation Core coupling | [Fixture 04 — Simulation Core Coupling](architecture-fixtures/fixture-04-simulation-core-coupling.md) |
-| A4, A5 — Scenario branching and Contracts isolation | [Fixture 05 — Scenario Branching](architecture-fixtures/fixture-05-scenario-branching.md) |
+| A6 — Physics coupling | [Fixture 04 — Physics Coupling Earned Through Behaviour](architecture-fixtures/fixture-04-simulation-core-coupling.md) |
+| A3, A4, A5 — Service branching and Contracts isolation | [Fixture 05 — Service Comparison Branching](architecture-fixtures/fixture-05-scenario-branching.md) |
+| A10 — No recommendation outputs | [Fixture 06 — No Recommendation Output](architecture-fixtures/fixture-06-no-recommendation.md) |

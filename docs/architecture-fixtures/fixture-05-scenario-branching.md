@@ -1,25 +1,26 @@
-# Fixture 05 — Scenario Branching
+# Fixture 05 — Service Comparison Branching
 
 ## Assumptions Tested
 
-* A4 — Identity resolution belongs in Mind during Alpha
+* A4 — Identity resolution belongs in Daedalus Main during Alpha
 * A5 — Locus, Timeline, and Snapshot are not promoted until earned
-* A3 — Contracts does not store inferred understanding by default
+* A3 — Daedalus Contracts does not store inferred understanding by default
+* A10 — Service comparison must not become recommendation
 
 ## Scenario
 
-Following a survey, two future pathways are being compared:
+Following a survey, two future service pathways are being compared:
 
 * **Pathway A** — keep the existing gas boiler, add a smart thermostat and zone controls
 * **Pathway B** — replace the heating system with an air-source heat pump, upgrade the cylinder, and upgrade emitters in the two coldest rooms
 
-Mind must be able to model both pathways simultaneously and compare outcomes without writing any draft or temporary state to Contracts.
+Daedalus Main must model both pathways simultaneously and compare outcomes without writing any draft or temporary state to Daedalus Contracts.
 
-Contracts must remain unchanged during scenario exploration. Only a completed, signed scenario output may be promoted to Contracts.
+Daedalus Contracts must remain unchanged during service exploration. Only a completed, signed output may be promoted to Daedalus Contracts.
 
 ## Input JSON
 
-### Contracts state — current observed record
+### Daedalus Contracts state — current observed record
 
 ```json
 {
@@ -55,7 +56,7 @@ Contracts must remain unchanged during scenario exploration. Only a completed, s
 }
 ```
 
-### Mind input — scenario request
+### Daedalus Main input — service comparison request
 
 ```json
 {
@@ -88,13 +89,13 @@ Contracts must remain unchanged during scenario exploration. Only a completed, s
 
 ## Expected Output JSON
 
-### Mind output — scenario comparison
+### Daedalus Main output — service comparison
 
-Both pathways are modelled entirely within Mind. No draft state is written to Contracts.
+Both pathways are modelled entirely within Daedalus Main. No draft state is written to Daedalus Contracts.
 
 ```json
 {
-  "scenario_output_id": "mind-scenario-001",
+  "scenario_output_id": "main-scenario-001",
   "scenario_request_id": "req-001",
   "visit_id": "visit-001",
   "property_ref": "prop-abc-123",
@@ -107,8 +108,9 @@ Both pathways are modelled entirely within Mind. No draft state is written to Co
       "simulated_annual_gas_kwh": 14200,
       "simulated_annual_cost_gbp": null,
       "simulated_carbon_kg_co2e": 2698,
-      "comfort_improvement": "moderate",
-      "notes": "Controls upgrade reduces overheating risk. No change to heat source efficiency.",
+      "comfort_behaviour": "moderate improvement",
+      "running_cost_uncertain": true,
+      "uncertainty_notes": ["Live tariff integration not connected"],
       "promoted_to_contracts": false
     },
     {
@@ -117,28 +119,33 @@ Both pathways are modelled entirely within Mind. No draft state is written to Co
       "simulated_annual_electricity_kwh": 4100,
       "simulated_annual_cost_gbp": null,
       "simulated_carbon_kg_co2e": 820,
-      "comfort_improvement": "high",
-      "notes": "COP 3.5 achievable at design conditions once emitters upgraded. Microbore pipework constraint noted.",
+      "comfort_behaviour": "high improvement",
+      "running_cost_uncertain": true,
+      "uncertainty_notes": ["Live tariff integration not connected", "Emitter sizing not fully observed"],
       "coupling_required": true,
       "coupling_ref": "fixture-04-simulation-core-coupling",
       "promoted_to_contracts": false
     }
   ],
   "comparison": {
-    "carbon_reduction_pathway_b_vs_a_kg": 1878,
-    "preferred_pathway_by_carbon": "pathway-b",
+    "differences": {
+      "carbon_delta_kg_co2e": 1878,
+      "hot_water_recovery_risk": "higher uncertainty for pathway-b",
+      "comfort_behaviour_delta": "pathway-b likely improves comfort more if emitter assumptions hold",
+      "disruption_delta": "pathway-b requires higher installation disruption"
+    },
     "decision_ready": false,
     "decision_blockers": [
       "Annual cost comparison requires live tariff data",
-      "Heat pump COP requires coupled simulation against actual emitter sizing"
+      "Heat pump COP requires coupled modelling against actual emitter sizing"
     ]
   }
 }
 ```
 
-### Contracts state — after scenario comparison has run
+### Daedalus Contracts state — after service comparison has run
 
-Contracts must be identical to the state before Mind ran. No scenario data has been written.
+Daedalus Contracts must be identical to the state before Daedalus Main ran. No scenario data has been written.
 
 ```json
 {
@@ -176,29 +183,31 @@ Contracts must be identical to the state before Mind ran. No scenario data has b
 
 ## Pass Condition
 
-* Both pathways are modelled and compared in Mind output.
-* `contracts_modified` is `false` in Mind output.
-* The Contracts record after the scenario run is byte-for-byte identical to the Contracts record before the scenario run.
+* Both pathways are modelled and compared in Daedalus Main output.
+* `contracts_modified` is `false` in Daedalus Main output.
+* The Daedalus Contracts record after the comparison run is byte-for-byte identical to the Daedalus Contracts record before the run.
 * `promoted_to_contracts` is `false` on both pathways.
-* No temporary or draft scenario data exists in Contracts at any point during scenario exploration.
+* No temporary or draft pathway data exists in Daedalus Contracts at any point during service comparison.
+* Output compares differences only and does not rank, score, prescribe, or select a best option.
 
 ## Fail Condition
 
-* Contracts has been modified to store either pathway as a draft, temporary record, or future state.
-* Scenario comparison cannot proceed without first writing state to Contracts.
-* Mind requires a Locus, Timeline, or Snapshot in Contracts before scenario branching can run.
-* Pathway data has been written to Contracts under any field name, including fields labelled as draft or temporary.
+* Daedalus Contracts has been modified to store either pathway as a draft, temporary record, or future state.
+* Service comparison cannot proceed without first writing state to Daedalus Contracts.
+* Daedalus Main requires a Locus, Timeline, or Snapshot in Daedalus Contracts before branching can run.
+* Pathway data has been written to Daedalus Contracts under any field name, including fields labelled as draft or temporary.
+* Output includes recommendation semantics such as `recommendedOption`, `bestOption`, `suitabilityScore`, `rank`, `winner`, `shouldChoose`, or `preferredSystem`.
 
 ## Architectural Impact
 
-If this fixture fails, scenario branching cannot be performed without polluting the source of truth.
+If this fixture fails, service comparison cannot be performed without polluting the source of truth.
 
-This would mean Contracts accumulates speculative future states alongside observed truth, making it impossible to distinguish what was observed from what was proposed.
+This would mean Daedalus Contracts accumulates speculative future states alongside observed truth, making it impossible to distinguish what was observed from what was proposed.
 
-The entire value of the Contracts boundary depends on this fixture passing.
+The value of the Daedalus Contracts boundary depends on this fixture passing.
 
 ## Notes
 
-Cost comparison is intentionally excluded from this fixture. Financial, tariff, and grant calculations remain external integrations as specified in the architecture constitution.
+Cost comparison is intentionally incomplete in this fixture. Finance, tariff, grant, and lending calculations remain external integrations as specified in the architecture constitution.
 
-The `decision_ready: false` state is intentional. A complete decision requires additional data. The fixture tests the architecture, not the completeness of a real-world scenario.
+The `decision_ready: false` state is intentional. The fixture tests architecture boundaries and explanation behaviour, not recommendation behaviour.

@@ -1,10 +1,10 @@
-# Fixture 01 — Scan Raw Capture
+# Fixture 01 — Daedalus Capture Raw Package
 
 ## Assumptions Tested
 
-* A1 — Scan remains capture-first
-* Scan may tag observations using the approved tag set
-* Scan does not resolve, calculate, recommend, or judge
+* A1 — Daedalus Capture remains capture-first
+* Daedalus Capture may tag observations using the approved tag set
+* Daedalus Capture does not resolve, calculate, recommend, rank, score, or judge
 
 ## Scenario
 
@@ -75,7 +75,7 @@ The following represents the raw field capture as submitted by the surveyor befo
 
 ## Expected Output JSON
 
-The following represents the valid Scan export. Only approved tags appear. No resolved identity, no calculations, no recommendations.
+The following represents the valid Daedalus Capture export. Only approved tags appear. No resolved identity, no calculations, no recommendations.
 
 ```json
 {
@@ -83,7 +83,7 @@ The following represents the valid Scan export. Only approved tags appear. No re
   "property_ref": "prop-abc-123",
   "surveyor_id": "surveyor-007",
   "captured_at": "2026-06-01T09:30:00Z",
-  "scan_version": "0.1.0",
+  "capture_version": "0.1.0",
   "observations": [
     {
       "observation_id": "obs-001",
@@ -139,28 +139,28 @@ The following represents the valid Scan export. Only approved tags appear. No re
 
 ## Pass Condition
 
-* Scan exports tagged observations using only approved tags.
+* Daedalus Capture exports tagged observations using only approved tags.
 * No `resolved_sku` field is present.
 * No `inferred_manufacturer` or `inferred_model` field is present unless explicitly entered by the surveyor.
 * No `heat_loss` field is present.
-* No `recommendation` field is present.
+* No `recommendation`, `rank`, or `score` field is present.
 * No `suitability` field is present.
 * No `pricing` field is present.
 * Every observation carries a `provenance` block.
 
 ## Fail Condition
 
-* Scan output contains any of the following fields: `resolved_sku`, `heat_loss`, `recommendation`, `suitability`, `pricing`, `customer_journey_copy`.
-* Scan output contains `inferred_manufacturer` or `inferred_model` populated from a source other than explicit surveyor entry.
+* Daedalus Capture output contains any of the following fields: `resolved_sku`, `heat_loss`, `recommendation`, `suitability`, `pricing`, `customer_journey_copy`, `rank`, `score`.
+* Daedalus Capture output contains `inferred_manufacturer` or `inferred_model` populated from a source other than explicit surveyor entry.
 * An observation is exported without a `provenance` block.
 * Any tag not in the approved set appears on an observation.
 
 ## Architectural Impact
 
-If this fixture fails, the Scan boundary has been violated. Downstream engineering logic has leaked into the capture layer.
+If this fixture fails, the Daedalus Capture boundary has been violated. Downstream engineering logic has leaked into the capture layer.
 
-The immediate consequence is that Contracts may receive inferred data as if it were observed truth, corrupting the source of record.
+The immediate consequence is that Daedalus Contracts may receive inferred data as if it were observed truth, corrupting the source of record.
 
 ## Notes
 
-This fixture will be evaluated against real Scan JSON output once Scan is running.
+This fixture will be evaluated against real Daedalus Capture JSON output once Daedalus Capture is running.

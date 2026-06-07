@@ -1,64 +1,65 @@
-# Mind Core Architecture Foundation
+# Daedalus Main Core Architecture Foundation
 
-This document defines the initial architecture of Atlas Mind before implementation begins.
+This document defines the initial architecture of Daedalus Main before implementation begins.
 
 ## Current Architectural Position
 
-Atlas Contracts stores truth.
+Daedalus Contracts stores observed truth.
 
-Atlas Mind creates understanding from that truth.
+Daedalus Main creates understanding from that truth.
 
 ## Identity Resolution
 
-Atlas recognises that long-term property identity may require concepts such as:
+Daedalus Main recognises that long-term property identity may require concepts such as:
 
 * Locus
 * Timeline
 * Snapshot
 
-Locus, Timeline, and Snapshot are currently Mind-only analytical constructs.
+Locus, Timeline, and Snapshot are currently Daedalus Main analytical constructs.
 
-Contracts stores observations and signed outputs.
+Daedalus Contracts stores observations and signed outputs.
 
-Mind may create, modify, replace, or discard identity-resolution models without requiring Contracts schema changes.
+Daedalus Main may create, modify, replace, or discard identity-resolution models without requiring Daedalus Contracts schema changes.
 
 ## Reasoning
 
-A Visit Package is an observation.
+A DaedalusPackage is an observation payload.
 
 A Locus is an inference.
 
-Contracts stores observations.
+Daedalus Contracts stores observations.
 
-Mind performs inferences.
+Daedalus Main performs inferences.
 
 ## Locus Promotion Rule
 
 Architectural concepts must earn promotion.
 
-No inferred model should be elevated into Contracts until practical implementation demonstrates clear operational value that cannot be achieved within Mind alone.
+No inferred model should be elevated into Daedalus Contracts until practical implementation demonstrates clear operational value that cannot be achieved within Daedalus Main alone.
 
-Locus should only be promoted into Contracts if one or more of the following become true:
+Locus should only be promoted into Daedalus Contracts if one or more of the following become true:
 
-1. Multi-visit comparisons are required directly within Scan.
+1. Multi-visit comparisons are required directly within Daedalus Capture.
 2. External systems require high-volume current-state queries.
 3. Legally binding multi-stage retrofit pathways require immutable temporal identity.
 
-## Simulation Architecture
+## Physical Modelling Architecture
 
-Mind consists of:
+Daedalus Main consists of:
 
-### Twin Builder
+### Twin Compiler
 
-* Builds System, House, and Home twins from evidence
+* Builds House, System, and Home twins from evidence
+* Compiles a Unified Property Twin
 
-### Simulation Core
+### Model Orchestration Core
 
-* Coordinates all simulation disciplines
-* Resolves dependency loops
-* Produces stable simulation outputs
+* Coordinates model disciplines
+* Resolves dependency loops when required
+* Produces stable comparison outputs
 
-### Simulation Disciplines
+### Model Disciplines (planned, not yet implemented)
 
 #### Thermodynamics
 
@@ -96,21 +97,21 @@ Mind consists of:
 
 * Rules and constraints
 
-### Decision Engine
+### Service Comparison Engine
 
-Consumes simulation outputs.
+Consumes model outputs.
 
 Produces:
 
-* Scenarios
-* Recommendations
-* Pathways
+* Service pathways
+* Difference analysis
+* Constraint disclosures
 
-### Journey Engine
+### Explanation Engine
 
-Explains decisions in human language.
+Explains outcomes in human language across visualisation, portal, PDF, and engineer handover outputs.
 
-### Visualisation
+### Visualisation Layer
 
 Consumes outputs only.
 
@@ -133,19 +134,19 @@ The following remain under active review:
 * Timeline architecture
 * Snapshot architecture
 * Stable identity models
-* Temporal simulation
-* Scenario branching
+* Temporal modelling
+* Service comparison branching
 
 These concepts must earn promotion through practical implementation rather than assumption.
 
 ## Success Criteria
 
-Mind Alpha can:
+Daedalus Main Alpha can:
 
-* Import Atlas Scan outputs
-* Build twins
-* Run simulations
-* Compare scenarios
-* Generate explanations
+* Import Daedalus Capture outputs as DaedalusPackage payloads
+* Build House, System, and Home twins
+* Compile a Unified Property Twin
+* Compare service pathways
+* Generate explanations with uncertainty and provenance
 
-without requiring Locus, Timeline, or Snapshot to exist in Contracts.
+without requiring Locus, Timeline, or Snapshot to exist in Daedalus Contracts.

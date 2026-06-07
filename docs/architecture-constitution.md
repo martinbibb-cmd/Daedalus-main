@@ -1,63 +1,69 @@
-# Mind Architecture Constitution & AI Guardrails
+# Daedalus Main Architecture Constitution & AI Guardrails
 
-This document establishes the constitutional rules for Atlas Mind before any simulation engines, visualisations, or user interfaces are implemented.
+This document establishes the constitutional rules for Daedalus Main before any physics engines, visualisations, portals, PDFs, or user interfaces are implemented.
 
 ## Purpose
 
-Atlas Mind exists to transform evidence into understanding.
+Daedalus Main exists to understand and explain reality.
 
 It is responsible for:
 
-* Building twins from evidence
-* Running simulations
-* Exploring scenarios
-* Supporting decisions
-* Explaining outcomes
+* Importing DaedalusPackage payloads
+* Compiling House, System, and Home twins into a Unified Property Twin
+* Preserving uncertainty and provenance
+* Modelling physical behaviour
+* Comparing services delivered by system configurations
+* Explaining outcomes through visualisation, portal, PDF, and engineer handover
 
 It is not responsible for:
 
 * Capturing evidence
-* Producing quotations
-* Financial advice
-* Grant advice
-* Mortgage advice
+* Altering captured evidence
+* Making recommendations
+* Ranking options
+* Scoring options
+* Determining suitability
+* Quoting
+* Pricing
+* Sales workflows
 * CRM workflows
 
 ## Core Product Boundaries
 
-### Atlas Contracts DAE
+### Daedalus Contracts
 
 * Owns truth
 * Owns evidence
 * Owns provenance
 * Owns signed outputs
 
-### Atlas Scan DAE
+### Daedalus Capture
 
 * Owns capture
 * Owns observations
 * Owns field evidence collection
 
-### Atlas Mind DAE
+### Daedalus Main
 
 * Owns understanding
 * Owns inference
-* Owns simulation
-* Owns decision support
+* Owns physical modelling
+* Owns service comparison
+* Owns explanation
 
 ## Architectural Rules
 
 1. Nothing visual exists until the contract exists.
-2. Nothing is recommended until it can be simulated.
-3. Simulation operates on twin representations.
+2. Nothing is explained until it can be derived from the twin or explicitly marked as uncertain.
+3. Physical modelling operates on twin representations.
 4. Unknown is a valid state.
 5. Provenance is never discarded.
-6. Identity resolution is an inferred model and must not be treated as observed truth unless explicitly promoted into Contracts.
+6. Identity resolution is an inferred model and must not be treated as observed truth unless explicitly promoted into Daedalus Contracts.
 7. Evidence may be observed, measured, inferred, customer-stated, or unknown.
-8. Engines own computation.
+8. Physics engines own computation.
 9. Visualisation owns presentation.
-10. Simulation Core owns orchestration.
-11. Cost, finance, grants, and lending remain external integrations.
+10. Orchestration owns model execution sequencing.
+11. Cost, finance, grants, lending, quoting, and pricing remain external integrations.
 
 ## AI Guardrails
 
@@ -74,20 +80,21 @@ AI may not:
 * Invent measurements
 * Invent provenance
 * Invent confidence
+* Recommend, rank, score, or choose outcomes
 
 All inferred values must remain explicitly marked as inferred.
 
-All recommendations must be explainable through evidence, twins, and simulation outputs.
+All service comparisons must be explainable through evidence, twins, and model outputs.
 
 ## Falsification Tests
 
 The architecture should be reconsidered if:
 
-* Most recommendations cannot be explained through simulation
-* Most simulations require manual overrides
+* Most comparisons cannot be explained through model behaviour
+* Most model runs require manual overrides
 * Provenance becomes impossible to trace
-* New features repeatedly bypass the Simulation Core
+* New features repeatedly bypass twin derivation and model orchestration
 
 ## Success Criteria
 
-A survey can be captured in Scan, imported into Mind, converted into twins, simulated, and explained without requiring manual data migration or duplicate data entry.
+A survey can be captured in Daedalus Capture, imported into Daedalus Main, converted into twins, modelled, and explained without requiring manual data migration or duplicate data entry.

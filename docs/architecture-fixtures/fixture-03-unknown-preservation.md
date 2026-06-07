@@ -9,11 +9,11 @@
 
 A surveyor visits a property and records a hot water cylinder. The cylinder has no visible data plate. The manufacturer and model are unknown. The surveyor cannot estimate the age or capacity from visual inspection alone.
 
-The observation must be accepted into Contracts exactly as captured. The ingestion layer must not reject it, default it, or invent a manufacturer or model.
+The observation must be accepted into Daedalus Contracts exactly as captured. The ingestion layer must not reject it, default it, or invent a manufacturer or model.
 
 ## Input JSON
 
-### Scan export — unidentified cylinder
+### Daedalus Capture export — unidentified cylinder
 
 ```json
 {
@@ -39,7 +39,7 @@ The observation must be accepted into Contracts exactly as captured. The ingesti
 
 ## Expected Output JSON
 
-### Contracts record — stored cylinder observation
+### Daedalus Contracts record — stored cylinder observation
 
 The record must be accepted and stored exactly as captured. Unknown fields remain null. Review status is preserved.
 
@@ -87,7 +87,7 @@ The record must be accepted and stored exactly as captured. Unknown fields remai
 
 ## Architectural Impact
 
-If this fixture fails, incomplete surveys cannot be stored in Contracts. This means a survey cannot be captured and ingested unless every asset is fully identified, which is impossible in practice.
+If this fixture fails, incomplete surveys cannot be stored in Daedalus Contracts. This means a survey cannot be captured and ingested unless every asset is fully identified, which is impossible in practice.
 
 Incomplete surveys are the norm in the field. The architecture must accommodate unknown as a first-class state at every stage.
 

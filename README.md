@@ -1,31 +1,36 @@
-# Atlas Mind DAE
+# Daedalus-Main
 
-Atlas Mind DAE exists to transform evidence into understanding.
+Daedalus-Main exists to understand and explain reality.
 
-Before any simulation engines, visualisations, or user interfaces are implemented, this repository defines the constitutional rules and core architectural shape for Atlas Mind.
+Before any physics engines, visualisations, portals, PDF outputs, or user interfaces are implemented, this repository defines the constitutional rules and core architectural shape for Daedalus Main.
 
 ## Purpose
 
-Atlas Mind is responsible for:
+Daedalus Main is responsible for:
 
-* Building twins from evidence
-* Running simulations
-* Exploring scenarios
-* Supporting decisions
-* Explaining outcomes
+* Importing DaedalusPackage payloads
+* Compiling House, System, and Home twins into a Unified Property Twin
+* Preserving uncertainty and provenance
+* Modelling physical behaviour
+* Comparing services delivered by system configurations
+* Explaining outcomes through visualisation, portal, PDF, and engineer handover
 
-Atlas Mind is not responsible for:
+Daedalus Main is not responsible for:
 
 * Capturing evidence
-* Producing quotations
-* Financial advice
-* Grant advice
-* Mortgage advice
+* Altering captured evidence
+* Making recommendations
+* Ranking options
+* Scoring options
+* Determining suitability
+* Quoting
+* Pricing
+* Sales workflows
 * CRM workflows
 
 ## Architecture Documents
 
-* [Mind Architecture Constitution & AI Guardrails](docs/architecture-constitution.md)
-* [Mind Core Architecture Foundation](docs/core-architecture-foundation.md)
+* [Daedalus Main Architecture Constitution & AI Guardrails](docs/architecture-constitution.md)
+* [Daedalus Main Core Architecture Foundation](docs/core-architecture-foundation.md)
 * [Architecture Assumptions](docs/architecture-assumptions.md)
 * [Architecture Fixtures](docs/architecture-fixtures/README.md)
