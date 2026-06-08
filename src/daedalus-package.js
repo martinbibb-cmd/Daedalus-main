@@ -53,6 +53,45 @@ const WATER_VALUE_NAMES = new Set([
   'tds',
   'qualitativeObservation',
 ]);
+const SERVICE_POINT_TYPES = new Set([
+  'kitchenTap',
+  'bathTap',
+  'basinTap',
+  'showerMixer',
+  'electricShower',
+  'outsideTap',
+  'washingMachineValve',
+  'cylinderInlet',
+  'other',
+  'unknown',
+]);
+const SUPPLY_TYPES = new Set([
+  'mainsCold',
+  'storedCold',
+  'gravityHot',
+  'mainsHot',
+  'pumpedHot',
+  'mixed',
+  'unknown',
+]);
+const INTENDED_PRESSURE_TYPES = new Set([
+  'mainsPressure',
+  'gravityLowPressure',
+  'pumped',
+  'universal',
+  'unknown',
+]);
+const OBSERVED_ISSUES = new Set([
+  'poorFlow',
+  'temperatureFluctuation',
+  'slowBathFill',
+  'noisyOperation',
+  'outletRestrictionSuspected',
+  'mismatchSuspected',
+  'scaledOrRestricted',
+  'noIssueObserved',
+  'unknown',
+]);
 const FORBIDDEN_OUTPUT_FIELDS = new Set([
   'recommendedOption',
   'bestOption',
@@ -175,6 +214,7 @@ function parseDaedalusPackage(input) {
   }
 
   const waterSupplyObservations = normalizeWaterSupplyObservations(normalizedPackage, issues, observationIds);
+  const servicePointObservations = normalizeServicePointObservations(normalizedPackage, issues, observationIds);
   const relationships = collectRelationships(normalizedPackage, issues, observationIds);
 
   if (issues.length > 0) {
@@ -187,6 +227,7 @@ function parseDaedalusPackage(input) {
     propertyRef,
     rawPackage: normalizedPackage,
     relationships,
+    servicePointObservations,
     waterSupplyObservations,
     visitId,
   };
@@ -236,8 +277,14 @@ function compileUnifiedPropertyTwin(parsedPackage) {
     packageId: parsedPackage.packageId,
     packageVersion: parsedPackage.packageVersion,
     propertyRef: parsedPackage.propertyRef,
-    provenanceLinks: buildProvenanceLinks(observations, relationships, parsedPackage.waterSupplyObservations),
+    provenanceLinks: buildProvenanceLinks(
+      observations,
+      relationships,
+      parsedPackage.waterSupplyObservations,
+      parsedPackage.servicePointObservations,
+    ),
     relationships,
+    servicePointObservations: cloneValue(parsedPackage.servicePointObservations),
     sourcePackage: cloneValue(parsedPackage.rawPackage),
     systemTwin: {
       boilers: systemObservations.filter((observation) => observation.tag === 'boiler').map(toTwinRecord),
@@ -287,6 +334,133 @@ function normalizeWaterSupplyObservations(rawPackage, issues, observationIds) {
   }
 
   return cloneValue(waterSupplyObservations);
+}
+
+function normalizeServicePointObservations(rawPackage, issues, observationIds) {
+  const servicePointObservations = rawPackage.servicePointObservations ?? [];
+  const observations = Array.isArray(rawPackage.observations) ? rawPackage.observations : [];
+  const evidenceObservationIds = new Set(
+    observations
+      .filter((observation) => isEvidenceTag(normalizeTag(readStringAlias(observation, ['tag']))))
+      .map((observation) => readStringAlias(observation, ['observationId', 'observation_id']))
+      .filter(Boolean),
+  );
+  const areaObservationIds = new Set(
+    observations
+      .filter((observation) => normalizeTag(readStringAlias(observation, ['tag'])) === 'area')
+      .map((observation) => readStringAlias(observation, ['observationId', 'observation_id']))
+      .filter(Boolean),
+  );
+
+  if (!Array.isArray(servicePointObservations)) {
+    issues.push(
+      createIssue(
+        ['servicePointObservations'],
+        'invalid_type',
+        'servicePointObservations must be an array when provided.',
+        servicePointObservations,
+      ),
+    );
+    return [];
+  }
+
+  const ids = new Set();
+  for (const [index, observation] of servicePointObservations.entries()) {
+    validateServicePointObservation(observation, index, issues, ids, observationIds, areaObservationIds, evidenceObservationIds);
+  }
+
+  return cloneValue(servicePointObservations);
+}
+
+function validateServicePointObservation(
+  observation,
+  index,
+  issues,
+  servicePointIds,
+  observationIds,
+  areaObservationIds,
+  evidenceObservationIds,
+) {
+  const path = ['servicePointObservations', index];
+
+  if (!isPlainObject(observation)) {
+    issues.push(createIssue(path, 'invalid_type', 'Service point observation must be an object.'));
+    return;
+  }
+
+  const id = readStringAlias(observation, ['id']);
+  const areaID = readStringAlias(observation, ['areaID', 'area_id']);
+  const servicePointType = readStringAlias(observation, ['servicePointType', 'service_point_type']);
+  const supplyType = readStringAlias(observation, ['supplyType', 'supply_type']);
+  const intendedPressureType = readStringAlias(observation, ['intendedPressureType', 'intended_pressure_type']);
+  const confidence = readStringAlias(observation, ['confidence']);
+
+  if (!id) {
+    issues.push(createIssue(path.concat('id'), 'missing_field', 'Service point observation id is required.'));
+  } else if (servicePointIds.has(id)) {
+    issues.push(createIssue(path.concat('id'), 'duplicate_service_point_observation_id', 'Service point observation id must be unique.', id));
+  } else {
+    servicePointIds.add(id);
+  }
+
+  if (!areaID) {
+    issues.push(createIssue(path.concat('areaID'), 'missing_field', 'Service point areaID is required.'));
+  } else if (!areaObservationIds.has(areaID)) {
+    issues.push(createIssue(path.concat('areaID'), 'missing_service_point_area_ref', `Service point areaID "${areaID}" does not match an area observation.`, areaID));
+  }
+
+  if (!SERVICE_POINT_TYPES.has(servicePointType)) {
+    issues.push(createIssue(path.concat('servicePointType'), 'unsupported_service_point_type', 'Unsupported service point type.', servicePointType ?? null));
+  }
+
+  if (!SUPPLY_TYPES.has(supplyType)) {
+    issues.push(createIssue(path.concat('supplyType'), 'unsupported_supply_type', 'Unsupported supply type.', supplyType ?? null));
+  }
+
+  if (!INTENDED_PRESSURE_TYPES.has(intendedPressureType)) {
+    issues.push(createIssue(path.concat('intendedPressureType'), 'unsupported_intended_pressure_type', 'Unsupported intended pressure type.', intendedPressureType ?? null));
+  }
+
+  if (!CONFIDENCE_STATES.has(confidence)) {
+    issues.push(createIssue(path.concat('confidence'), 'unsupported_confidence_state', 'Unsupported confidence state.', confidence ?? null));
+  }
+
+  validateProvenance(observation, path, issues);
+
+  const observedIssues = readStringArrayAlias(observation, ['observedIssues', 'observed_issues']);
+  observedIssues.forEach((issue, issueIndex) => {
+    if (!OBSERVED_ISSUES.has(issue)) {
+      issues.push(createIssue(path.concat('observedIssues', issueIndex), 'unsupported_observed_issue', 'Unsupported observed issue.', issue));
+    }
+  });
+
+  const servedByAssetIDs = readStringArrayAlias(observation, ['servedByAssetIDs', 'served_by_asset_ids']);
+  servedByAssetIDs.forEach((assetID, assetIndex) => {
+    if (!observationIds.has(assetID)) {
+      issues.push(
+        createIssue(
+          path.concat('servedByAssetIDs', assetIndex),
+          'missing_service_point_served_asset_ref',
+          `Service point servedByAssetID "${assetID}" does not match any observation.`,
+          assetID,
+        ),
+      );
+    }
+  });
+
+  const evidenceIDs = readStringArrayAlias(observation, ['evidenceIDs', 'evidence_ids']);
+  evidenceIDs.forEach((evidenceID, evidenceIndex) => {
+    if (!evidenceObservationIds.has(evidenceID)) {
+      issues.push(
+        createIssue(
+          path.concat('evidenceIDs', evidenceIndex),
+          'missing_service_point_evidence_ref',
+          `Service point evidenceID "${evidenceID}" does not match an evidence observation.`,
+          evidenceID,
+        ),
+      );
+    }
+  });
 }
 
 function validateWaterSupplyObservation(observation, index, issues, waterObservationIds, evidenceObservationIds) {
@@ -610,6 +784,7 @@ function collectConfidenceStates(rawPackage, relationships) {
   const states = [];
   const observations = Array.isArray(rawPackage.observations) ? rawPackage.observations : [];
   const waterSupplyObservations = Array.isArray(rawPackage.waterSupplyObservations) ? rawPackage.waterSupplyObservations : [];
+  const servicePointObservations = Array.isArray(rawPackage.servicePointObservations) ? rawPackage.servicePointObservations : [];
 
   for (const observation of observations) {
     const observationId = readStringAlias(observation, ['observationId', 'observation_id']) ?? 'unknown-observation';
@@ -619,6 +794,11 @@ function collectConfidenceStates(rawPackage, relationships) {
   for (const observation of waterSupplyObservations) {
     const observationId = readStringAlias(observation, ['id']) ?? 'unknown-water-supply-observation';
     walkConfidence(observation, [], `waterSupplyObservation:${observationId}`, states);
+  }
+
+  for (const observation of servicePointObservations) {
+    const observationId = readStringAlias(observation, ['id']) ?? 'unknown-service-point-observation';
+    walkConfidence(observation, [], `servicePointObservation:${observationId}`, states);
   }
 
   for (const relationship of relationships) {
@@ -728,7 +908,7 @@ function extractConfidencePayload(value) {
   return Object.keys(payload).length > 0 ? payload : null;
 }
 
-function buildProvenanceLinks(observations, relationships, waterSupplyObservations = []) {
+function buildProvenanceLinks(observations, relationships, waterSupplyObservations = [], servicePointObservations = []) {
   const observationLinks = observations.map((observation) => ({
     evidenceRefs: cloneArray(observation.evidenceRefs),
     provenance: cloneValue(observation.provenance),
@@ -747,8 +927,14 @@ function buildProvenanceLinks(observations, relationships, waterSupplyObservatio
     sourceRef: readStringAlias(observation, ['id']) ?? 'unknown-water-supply-observation',
     sourceType: 'waterSupplyObservation',
   }));
+  const servicePointLinks = servicePointObservations.map((observation) => ({
+    evidenceRefs: cloneArray(readStringArrayAlias(observation, ['evidenceIDs', 'evidence_ids'])),
+    provenance: cloneValue(readProvenance(observation)),
+    sourceRef: readStringAlias(observation, ['id']) ?? 'unknown-service-point-observation',
+    sourceType: 'servicePointObservation',
+  }));
 
-  return observationLinks.concat(relationshipLinks, waterSupplyLinks);
+  return observationLinks.concat(relationshipLinks, waterSupplyLinks, servicePointLinks);
 }
 
 function assertNoForbiddenFields(value, path = []) {

@@ -110,6 +110,7 @@ function summarizeCompiledTwin(compiledTwin) {
     packageVersion: compiledTwin.packageVersion,
     propertyRef: compiledTwin.propertyRef,
     relationshipCount: compiledTwin.relationships.length,
+    servicePointObservationCount: compiledTwin.servicePointObservations.length,
     systemAssetCount: compiledTwin.systemTwin.observationIds.length,
     waterSupplyObservationCount: compiledTwin.waterSupplyObservations.length,
     unknownCount: stateCounts.unknown,
@@ -207,6 +208,7 @@ function renderImportShellPage({ summary = null, inspection = null, issues = [],
           <li><strong>Relationships:</strong> ${summary.relationshipCount}</li>
           <li><strong>Evidence count:</strong> ${summary.evidenceCount}</li>
           <li><strong>Water supply observations:</strong> ${summary.waterSupplyObservationCount}</li>
+          <li><strong>Service point observations:</strong> ${summary.servicePointObservationCount}</li>
           <li><strong>Unknown count:</strong> ${summary.unknownCount}</li>
           <li><strong>Approximate count:</strong> ${summary.approximateCount}</li>
           <li><strong>Unresolved count:</strong> ${summary.unresolvedCount}</li>
@@ -355,6 +357,9 @@ function buildInspectionData(compiledTwin) {
     unresolved: formatUncertaintyStates(compiledTwin.confidenceStates, 'unresolved'),
   };
   const waterSupply = compiledTwin.waterSupplyObservations.map(formatWaterSupplyObservation);
+  const servicePoints = compiledTwin.servicePointObservations.map((observation) =>
+    formatServicePointObservation(observation, areas, waterSupply),
+  );
 
   return {
     areas,
@@ -363,6 +368,7 @@ function buildInspectionData(compiledTwin) {
     relationships,
     systemAssets,
     uncertainty,
+    servicePoints,
     waterSupply,
     waterSupplyUncertainty: buildWaterSupplyUncertainty(waterSupply),
   };
@@ -388,6 +394,10 @@ function renderInspectionSections(inspection) {
       <section>
         <h2>Water Supply</h2>
         ${renderWaterSupplyTable(inspection.waterSupply)}
+      </section>
+      <section>
+        <h2>Service Points</h2>
+        ${renderServicePointTable(inspection.servicePoints)}
       </section>
       <section>
         <h2>Provenance</h2>
@@ -508,6 +518,34 @@ function renderWaterSupplyTable(observations) {
         <td>${escapeHtml(observation.intent)}</td>
         <td>${escapeHtml(observation.values)}</td>
         <td>${escapeHtml(observation.limitations)}</td>
+        <td>${escapeHtml(formatList(observation.evidenceIDs))}</td>
+        <td>${escapeHtml(observation.confidence)}</td>
+      </tr>`,
+        )
+        .join('')}
+    </tbody>
+  </table>`;
+}
+
+function renderServicePointTable(observations) {
+  if (observations.length === 0) {
+    return '<p class="muted">None</p>';
+  }
+
+  return `<table>
+    <thead>
+      <tr><th>Service point</th><th>Area</th><th>Supply type</th><th>Intended pressure</th><th>Observed issues</th><th>Linked water measurements</th><th>Evidence</th><th>Confidence</th></tr>
+    </thead>
+    <tbody>
+      ${observations
+        .map(
+          (observation) => `<tr>
+        <td>${escapeHtml(observation.servicePoint)}</td>
+        <td>${escapeHtml(observation.area)}</td>
+        <td>${escapeHtml(observation.supplyType)}</td>
+        <td>${escapeHtml(observation.intendedPressureType)}</td>
+        <td>${escapeHtml(formatList(observation.observedIssues))}</td>
+        <td>${escapeHtml(formatList(observation.linkedWaterMeasurements))}</td>
         <td>${escapeHtml(formatList(observation.evidenceIDs))}</td>
         <td>${escapeHtml(observation.confidence)}</td>
       </tr>`,
@@ -650,6 +688,47 @@ function formatWaterSupplyObservation(observation) {
     valueNames: values.map((value) => readStringField(value, ['name'])).filter(Boolean),
     values: values.map(formatWaterValue).join('; ') || 'none',
   };
+}
+
+function formatServicePointObservation(observation, areas, waterSupply) {
+  const id = readStringField(observation, ['id']) ?? 'unknown-service-point-observation';
+  const areaID = readStringField(observation, ['areaID', 'area_id']) ?? 'unknown-area';
+  const area = areas.find((entry) => entry.id === areaID);
+  const servicePointType = readStringField(observation, ['servicePointType', 'service_point_type']) ?? 'unknown';
+  return {
+    area: area ? `${area.name} (${area.id})` : areaID,
+    areaID,
+    confidence: readStringField(observation, ['confidence']) ?? 'unknown',
+    evidenceIDs: readStringArrayField(observation, ['evidenceIDs', 'evidence_ids']),
+    id,
+    intendedPressureType: readStringField(observation, ['intendedPressureType', 'intended_pressure_type']) ?? 'unknown',
+    linkedWaterMeasurements: linkedWaterMeasurementsForServicePoint(servicePointType, waterSupply),
+    notes: readStringField(observation, ['notes']) ?? '',
+    observedIssues: readStringArrayField(observation, ['observedIssues', 'observed_issues']),
+    provenance: formatProvenance(observation.provenance),
+    rawObservation: cloneValue(observation),
+    servedByAssetIDs: readStringArrayField(observation, ['servedByAssetIDs', 'served_by_asset_ids']),
+    servicePoint: `${servicePointType} (${id})`,
+    servicePointType,
+    supplyType: readStringField(observation, ['supplyType', 'supply_type']) ?? 'unknown',
+  };
+}
+
+function linkedWaterMeasurementsForServicePoint(servicePointType, waterSupply) {
+  const matchingLocations = {
+    bathTap: new Set(['bathTap']),
+    basinTap: new Set(['bathroomBasinTap']),
+    cylinderInlet: new Set(['cylinderColdInlet', 'cylinderCupboard']),
+    kitchenTap: new Set(['kitchenColdTap']),
+    outsideTap: new Set(['outsideTap']),
+    showerMixer: new Set(['showerOutlet']),
+    electricShower: new Set(['showerOutlet']),
+    washingMachineValve: new Set(['washingMachineValve']),
+  }[servicePointType] ?? new Set();
+
+  return waterSupply
+    .filter((observation) => matchingLocations.has(observation.location))
+    .map((observation) => `${observation.id}: ${observation.values}`);
 }
 
 function formatWaterValue(value) {

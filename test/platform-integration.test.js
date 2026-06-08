@@ -25,7 +25,8 @@ test('cross-repo heating survey fixture imports and renders without recommendati
   assert.equal(summary.systemAssetCount, 6);
   assert.equal(summary.relationshipCount, 7);
   assert.equal(summary.evidenceCount, 3);
-  assert.equal(summary.waterSupplyObservationCount, 4);
+  assert.equal(summary.waterSupplyObservationCount, 5);
+  assert.equal(summary.servicePointObservationCount, 1);
   assert.ok(summary.approximateCount > 0);
   assert.ok(summary.unknownCount > 0);
   assert.ok(summary.unresolvedCount > 0);
@@ -54,12 +55,22 @@ test('cross-repo heating survey fixture imports and renders without recommendati
   assert.match(mapHtml, /evidence-boiler-photo/);
   assert.deepEqual(
     inspection.waterSupply.map((observation) => observation.id),
-    ['water-flow-cup-kitchen', 'water-pressure-flow-pairs', 'water-customer-report', 'water-not-tested'],
+    ['water-flow-cup-kitchen', 'water-pressure-flow-pairs', 'water-flow-cup-bath', 'water-customer-report', 'water-not-tested'],
   );
   assert.ok(inspection.waterSupplyUncertainty['measured pressure+flow'].includes('water-pressure-flow-pairs'));
   assert.ok(inspection.waterSupplyUncertainty['flow-only'].includes('water-flow-cup-kitchen'));
   assert.ok(inspection.waterSupplyUncertainty['customer-reported'].includes('water-customer-report'));
   assert.ok(inspection.waterSupplyUncertainty['not tested'].some((value) => value.includes('water-not-tested')));
+  assert.deepEqual(
+    inspection.servicePoints.map((observation) => observation.id),
+    ['service-point-bath-tap'],
+  );
+  assert.equal(inspection.servicePoints[0].areaID, 'area-airing-cupboard');
+  assert.equal(inspection.servicePoints[0].supplyType, 'gravityHot');
+  assert.equal(inspection.servicePoints[0].intendedPressureType, 'mainsPressure');
+  assert.deepEqual(inspection.servicePoints[0].observedIssues, ['poorFlow', 'mismatchSuspected']);
+  assert.ok(inspection.servicePoints[0].linkedWaterMeasurements.some((value) => value.includes('water-flow-cup-bath')));
+  assert.deepEqual(inspection.servicePoints[0].evidenceIDs, ['evidence-cylinder-photo']);
 
   const response = await handleImportShellRequest(
     new Request('https://example.com/import', {
@@ -77,8 +88,11 @@ test('cross-repo heating survey fixture imports and renders without recommendati
   assert.match(shellHtml, /System assets:<\/strong> 6/);
   assert.match(shellHtml, /Relationships:<\/strong> 7/);
   assert.match(shellHtml, /Evidence count:<\/strong> 3/);
-  assert.match(shellHtml, /Water supply observations:<\/strong> 4/);
+  assert.match(shellHtml, /Water supply observations:<\/strong> 5/);
+  assert.match(shellHtml, /Service point observations:<\/strong> 1/);
   assert.match(shellHtml, /Water Supply/);
+  assert.match(shellHtml, /Service Points/);
+  assert.match(shellHtml, /service-point-bath-tap/);
   assert.match(shellHtml, /pressureFlowTestKit/);
   assert.match(shellHtml, /Water supply uncertainty/);
   assert.match(shellHtml, /Unknown facts/);
