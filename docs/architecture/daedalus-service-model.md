@@ -434,6 +434,14 @@ The scaffold should allow Main to assemble model context without pretending to k
 
 ## Ownership Boundaries
 
+### Deployment Boundary
+
+The production deployment boundary is defined in [Deployment Architecture](../DEPLOYMENT_ARCHITECTURE.md).
+
+Cloudflare deployment is the public front door, demo/import shell, portal, API gateway, and control plane. It is not the production sensitive evidence-processing backend.
+
+The production evidence backend is a private VM or controlled server for raw evidence processing, transcription, diarisation, LLM extraction, evidence graph construction, twin compilation, physics, method/rationale generation, and private twin storage.
+
 ### Daedalus Capture
 
 Capture records observations and evidence.
